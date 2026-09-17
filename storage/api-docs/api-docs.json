@@ -12,6 +12,74 @@
         }
     ],
     "paths": {
+        "/api/brands": {
+            "get": {
+                "tags": [
+                    "Brands"
+                ],
+                "summary": "Получить список всех брендов",
+                "operationId": "3c41aa2e65314941e37a634e810c5f73",
+                "responses": {
+                    "200": {
+                        "description": "Список брендов получен",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "title": {
+                                                "type": "string",
+                                                "example": "Apple"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Brands"
+                ],
+                "summary": "Создать новую категорию",
+                "operationId": "1dae5363a453b159e035bc04b3fbc0be",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "title"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Apple"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Бренд успешно создан"
+                    },
+                    "422": {
+                        "description": "Ошибка валидации (например, имя уже занято)"
+                    }
+                }
+            }
+        },
         "/api/categories": {
             "get": {
                 "tags": [
@@ -176,6 +244,10 @@
         }
     },
     "tags": [
+        {
+            "name": "Brands",
+            "description": "Brands"
+        },
         {
             "name": "Categories",
             "description": "Categories"
