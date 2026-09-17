@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
 
@@ -64,27 +65,80 @@ class CategoryController extends Controller
             ->setStatusCode(201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Category $category)
+    #[OA\Get(
+        path: "/api/categories/{id}",
+        summary: "Получить конкретную категорию по ID",
+        tags: ["Categories"],
+        parameters: [
+            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer"))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: "Категория найдена"),
+            new OA\Response(response: 404, description: "Категория не найдена")
+        ]
+    )]
+    public function show(Category $category): CategoryResource
     {
-        //
+        return new CategoryResource($category);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Category $category)
+    #[OA\Put(
+        path: "/api/categories/{id}",
+        summary: "Обновить название категории",
+        tags: ["Categories"],
+        parameters: [
+            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer"))
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["title"],
+                properties: [
+                    new OA\Property(property: "title", type: "string", example: "Новое название категории")
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: "Категория успешно обновлена"),
+            new OA\Response(response: 422, description: "Ошибка валидации")
+        ]
+    )]
+    public function update(Request $request, Category $category): CategoryResource
     {
-        //
+        $validated = $request->validate([
+            'title' => 'required|string|max:255|unique:categories,title,' . $category->id,
+        ]);
+
+        $category->update($validated);
+
+        return new CategoryResource($category);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Category $category)
+    #[OA\Delete(
+        path: "/api/categories/{id}",
+        summary: "Удалить категорию",
+        tags: ["Categories"],
+        parameters: [
+            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer"))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: "Категория успешно удалена"),
+            new OA\Response(response: 400, description: "Ошибка: категорию нельзя удалить, так как к ней привязаны товары")
+        ]
+    )]
+    public function destroy(Category $category): JsonResponse
     {
-        //
+        if ($category->products()->exists()) {
+            return response()->json([
+                'error' => 'Cannot delete category',
+                'message' => 'Невозможно удалить категорию "' . $category->title . '", так как к ней привязаны товары. Сначала удалите или перенесите эти товары.'
+            ], 400);
+        }
+
+        $category->delete();
+
+        return response()->json([
+            'message' => 'Category deleted successfully'
+        ], 200);
     }
 }
